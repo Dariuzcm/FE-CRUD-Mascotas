@@ -1,46 +1,42 @@
-import {AfterViewInit, Component, ViewChild} from '@angular/core';
+import { AfterViewInit, Component, ViewChild } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { Mascota } from 'src/app/interface/mascota';
-
-const listadoMascota: Mascota[] = [
-  {id: 1, nombre: 'Hydrogen1', raza: 'Golder Retriver', color:'Dorado', edad:15, peso:20},
-  {id: 2, nombre: 'Hydrogen2', raza: 'Golder Retriver', color:'Dorado', edad:15, peso:20},
-  {id: 3, nombre: 'Hydrogen3', raza: 'Golder Retriver', color:'Dorado', edad:15, peso:20},
-  {id: 4, nombre: 'Hydrogen4', raza: 'Golder Retriver', color:'Dorado', edad:15, peso:20},
-  {id: 5, nombre: 'Hydrogen5', raza: 'Golder Retriver', color:'Dorado', edad:15, peso:20},
-  {id: 6, nombre: 'Hydrogen6', raza: 'Golder Retriver', color:'Dorado', edad:15, peso:20},
-  {id: 7, nombre: 'Hydrogen7', raza: 'Golder Retriver', color:'Dorado', edad:20, peso:20},
-  {id: 8, nombre: 'Hydrogen8', raza: 'Golder Retriver', color:'Dorado', edad:25, peso:20},
-  {id: 9, nombre: 'Hydrogen9', raza: 'Golder Retriver', color:'Dorado', edad:45, peso:20},
-  {id: 10, nombre: 'Hydrogen10', raza: 'Golder Retriver', color:'Dorado', edad:55, peso:20},
-];
+import { MascotaService } from 'src/app/service/mascota.service';
 
 @Component({
   selector: 'app-listado-mascota',
   templateUrl: './listado-mascota.component.html',
   styleUrls: ['./listado-mascota.component.css']
 })
-export class ListadoMascotaComponent implements AfterViewInit  {
-  constructor(private _snackBar: MatSnackBar) {}
+export class ListadoMascotaComponent implements AfterViewInit {
+  constructor(private _snackBar: MatSnackBar, private _petService: MascotaService) {
 
-  openSnackBar(message: string, action: string) {
-    this._snackBar.open(message, action);
   }
+  ngOnInit(): void {
+    this.getPets()
+  }
+
+  getPets() {
+    this._petService.getMascotas().subscribe(data => {
+      this.dataSource.data = data
+    })
+  }
+
   loading: boolean = false
   displayedColumns: string[] = ["nombre", "edad", "raza", "color", "peso", "acciones"];
-  dataSource = new MatTableDataSource<Mascota>(listadoMascota);
+  dataSource = new MatTableDataSource<Mascota>();
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  
+
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }
-  length = listadoMascota.length;
+  length = this.dataSource.data.length;
   pageSize = 5;
   pageIndex = 0;
 
@@ -53,7 +49,7 @@ export class ListadoMascotaComponent implements AfterViewInit  {
 
   handlePageEvent(e: PageEvent) {
     this.pageEvent = e;
-    this.length = e.length;
+    this.length = this.dataSource.data.length
     this.pageSize = e.pageSize;
     this.pageIndex = e.pageIndex;
   }
@@ -67,14 +63,15 @@ export class ListadoMascotaComponent implements AfterViewInit  {
 
   }
   destroyPet(petId: number) {
-    this.loading=true
-    setTimeout(()=>{
-      this.loading=false
-      let pet = listadoMascota.find( element => element.id == petId)
-      this._snackBar.open(`Eliminando Mascota ${pet?.nombre}`,'warning',{
+    this.loading = true
+    const pet = this.dataSource.data.find(item => item.id === petId)
+    this._petService.deletePet(petId).subscribe( _ => {
+      this._snackBar.open(`Mascota ${pet?.nombre}`, 'Eliminando', {
         duration: 1000,
         horizontalPosition: 'right',
-      })
-    }, 1000)
+      });
+      this.loading=false;
+      this.getPets();
+    })
   }
 }

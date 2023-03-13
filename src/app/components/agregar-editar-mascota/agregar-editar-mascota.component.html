@@ -1,5 +1,6 @@
 <div class="title">
-    <h1>Agregar Mascota</h1>
+    <h1 *ngIf="params.id">Editar Mascota</h1>
+    <h1 *ngIf="!params.id">Agregar Mascota</h1>
 </div>
 <app-spinner *ngIf="loading"></app-spinner>
 <div class="container">
